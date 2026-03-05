@@ -1,0 +1,136 @@
+{
+  "name": "ai-barbershop-automation",
+  "nodes": [
+    {
+      "name": "Webhook - Receive Message",
+      "type": "n8n-nodes-base.webhook",
+      "position": [200, 300],
+      "parameters": {
+        "path": "whatsapp-webhook",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.set",
+      "position": [400, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "phone",
+              "value": "={{$json.body.phone}}"
+            },
+            {
+              "name": "message",
+              "value": "={{$json.body.message}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PostgreSQL - Identify User",
+      "type": "n8n-nodes-base.postgres",
+      "position": [600, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT name, user_type, preferred_barber FROM users WHERE phone = {{$json.phone}};"
+      }
+    },
+    {
+      "name": "IF - Is Customer?",
+      "type": "n8n-nodes-base.if",
+      "position": [800, 300],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.user_type}}",
+              "operation": "equal",
+              "value2": "customer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "AI - Customer Assistant",
+      "type": "n8n-nodes-base.openAi",
+      "position": [1000, 150],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": "You are an AI assistant for a barbershop. Help customers schedule, cancel or reschedule appointments in a natural conversation."
+      }
+    },
+    {
+      "name": "Check Calendar Availability",
+      "type": "n8n-nodes-base.googleCalendar",
+      "position": [1200, 150],
+      "parameters": {
+        "operation": "getAll"
+      }
+    },
+    {
+      "name": "Create Appointment",
+      "type": "n8n-nodes-base.googleCalendar",
+      "position": [1400, 150],
+      "parameters": {
+        "operation": "create"
+      }
+    },
+    {
+      "name": "Notify Barber",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1600, 100],
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://api.whatsapp-provider.com/send-message"
+      }
+    },
+    {
+      "name": "Upsell Product Suggestion",
+      "type": "n8n-nodes-base.openAi",
+      "position": [1600, 250],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": "Suggest a grooming product related to the booked service."
+      }
+    },
+    {
+      "name": "Schedule Reminder",
+      "type": "n8n-nodes-base.wait",
+      "position": [1800, 150],
+      "parameters": {
+        "waitTime": "2 hours"
+      }
+    },
+    {
+      "name": "Send Reminder Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2000, 150],
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://api.whatsapp-provider.com/send-message"
+      }
+    },
+    {
+      "name": "AI - Barber Assistant",
+      "type": "n8n-nodes-base.openAi",
+      "position": [1000, 450],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": "You help barbers manage their schedule: check appointments, cancel bookings, reschedule or block time slots."
+      }
+    },
+    {
+      "name": "Send Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1400, 450],
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://api.whatsapp-provider.com/send-message"
+      }
+    }
+  ]
+}
