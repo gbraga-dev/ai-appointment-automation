@@ -1,4 +1,4 @@
-# Automação de Barbearia com IA
+# Automação de agendamentos com IA
 
 Projeto de automação para atendimento ao cliente e agendamento de horários em barbearias utilizando IA e automação de workflows.
 
